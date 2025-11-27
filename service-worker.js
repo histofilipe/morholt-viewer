@@ -1,13 +1,15 @@
-const CACHE_NAME = 'qr-viewer-v1';
+// Nome do cache (mude se fizer alterações grandes, para forçar atualização)
+const CACHE_NAME = 'qr-viewer-v2';
 
-// Liste aqui todos os arquivos que devem funcionar offline
+// Arquivos que devem funcionar offline
 const URLS_TO_CACHE = [
   './',
   './index.html',
   './papaparse.min.js',
-  './unificado_consolidado v26_10 v1.csv'
+  './dados.csv'
 ];
 
+// Instalação: faz o pré-cache dos arquivos
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -16,6 +18,7 @@ self.addEventListener('install', event => {
   );
 });
 
+// Ativação: remove caches antigos
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -28,11 +31,25 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Estratégia: cache-first (usa o que estiver salvo; se não tiver, vai na rede)
+// Fetch: trata navegação (?np=...) e outros arquivos
 self.addEventListener('fetch', event => {
+  // 1) Navegação (URL digitada, clique em link, QR Code etc.)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('./index.html').then(response => {
+        // Se tiver no cache, usa. Se não, tenta buscar da rede.
+        return response || fetch(event.request);
+      })
+    );
+    return;
+  }
+
+  // 2) Demais requisições (CSV, JS, etc.) – estrategia cache-first
   event.respondWith(
     caches.match(event.request).then(response => {
-      if (response) return response;
+      if (response) {
+        return response;
+      }
       return fetch(event.request);
     })
   );
