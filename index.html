@@ -76,9 +76,11 @@
       display: flex;
       gap: 8px;
       margin-bottom: 12px;
+      flex-wrap: wrap;
     }
     .search-box input {
       flex: 1;
+      min-width: 140px;
       padding: 8px 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
@@ -92,23 +94,55 @@
       cursor: pointer;
       background: #007bff;
       color: white;
+      white-space: nowrap;
     }
     .search-box button:active {
       opacity: 0.8;
+    }
+
+    /* Área de câmera / QR */
+    .qr-area {
+      margin-top: 12px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .qr-area video {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      background: #000;
+    }
+    .qr-hint {
+      font-size: 0.8rem;
+      color: #555;
+      text-align: center;
     }
   </style>
 
   <!-- Papaparse local -->
   <script src="./papaparse.min.js"></script>
+  <!-- Biblioteca de leitura de QR (arquivo jsQR.js na mesma pasta) -->
+  <script src="./jsQR.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Consulta de Registro por NP</h1>
 
-    <!-- Busca manual (além do QR) -->
+    <!-- Busca manual + leitura de QR -->
     <div class="search-box">
       <input id="manualNp" type="text" placeholder="Digite o NP (ex: ab-011)" />
       <button onclick="buscarManual()">Buscar</button>
+      <button onclick="iniciarLeituraQr()">Ler QR com câmera</button>
+    </div>
+
+    <!-- Área de câmera -->
+    <div id="qrArea" class="qr-area">
+      <video id="qrVideo" playsinline></video>
+      <div class="qr-hint">
+        Aponte a câmera para o QR Code. A leitura para automaticamente ao encontrar um código.
+      </div>
     </div>
 
     <div id="npInfo" class="np-highlight"></div>
@@ -121,7 +155,6 @@
   </div>
 
   <script>
-    // 👉 nome do arquivo de dados
     const CSV_FILE = 'dados.csv';
 
     let registros = [];
@@ -150,7 +183,6 @@
       'obs_final'
     ];
 
-    // Rótulos bonitos para exibição
     const LABELS = {
       np: 'NP',
       material: 'Material',
@@ -201,7 +233,7 @@
       let html = '';
 
       CAMPOS_VISIVEIS.forEach(col => {
-        // preferir "sitio", se não, "added_sitio"
+        // sitio/added_sitio tratados juntos
         if (col === 'sitio') {
           const valorSitio = registro['sitio'] || registro['added_sitio'];
           if (valorSitio && valorSitio.trim() !== '') {
@@ -212,11 +244,10 @@
               </tr>
             `;
           }
-          return; // já tratamos sitio/added_sitio
+          return;
         }
 
         const valor = registro[col];
-
         if (valor === null || valor === undefined) return;
         if (valor.toString().trim() === '') return;
 
@@ -277,7 +308,7 @@
         download: true,
         header: true,
         skipEmptyLines: true,
-        delimiter: ';',          // 👈 IMPORTANTE: seu arquivo usa ponto-e-vírgula
+        delimiter: ';',
         complete: function(results) {
           if (results.errors && results.errors.length > 0) {
             console.warn('Erros ao ler CSV:', results.errors);
@@ -297,7 +328,7 @@
             document.getElementById('manualNp').value = npUrl;
             buscarPorNp(npUrl);
           } else {
-            setStatus('Digite um NP ou use um QR Code com ?np=...', '');
+            setStatus('Digite um NP, use um QR Code com ?np=... ou clique em "Ler QR com câmera".', '');
           }
         },
         error: function(err) {
@@ -307,7 +338,111 @@
       });
     }
 
-    // registra o service worker (offline)
+    // ======= Leitura de QR com câmera =======
+    let qrStream = null;
+    let qrAnimationId = null;
+
+    async function iniciarLeituraQr() {
+      const qrArea = document.getElementById('qrArea');
+      const video = document.getElementById('qrVideo');
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus('Este dispositivo/navegador não suporta acesso à câmera.', 'error');
+        return;
+      }
+
+      try {
+        setStatus('Abrindo câmera para leitura de QR...', '');
+        qrArea.style.display = 'flex';
+
+        qrStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false
+        });
+
+        video.srcObject = qrStream;
+        await video.play();
+
+        iniciarLoopQr(video);
+      } catch (err) {
+        console.error(err);
+        setStatus('Não foi possível acessar a câmera (permissão negada ou erro).', 'error');
+      }
+    }
+
+    function pararLeituraQr() {
+      if (qrAnimationId) {
+        cancelAnimationFrame(qrAnimationId);
+        qrAnimationId = null;
+      }
+      if (qrStream) {
+        qrStream.getTracks().forEach(t => t.stop());
+        qrStream = null;
+      }
+      const qrArea = document.getElementById('qrArea');
+      const video = document.getElementById('qrVideo');
+      video.srcObject = null;
+      qrArea.style.display = 'none';
+    }
+
+    function tratarResultadoQr(texto) {
+      let np = null;
+
+      // 1) Tenta interpretar como URL com ?np=
+      try {
+        const url = new URL(texto);
+        const param = url.searchParams.get('np');
+        if (param) {
+          np = param;
+        }
+      } catch (e) {
+        // Não é URL, tudo bem
+      }
+
+      // 2) Se não achou via URL, usa o texto inteiro como NP
+      if (!np) {
+        np = texto;
+      }
+
+      if (np) {
+        document.getElementById('manualNp').value = np;
+        buscarPorNp(np);
+        setStatus('QR lido com sucesso.', 'success');
+      } else {
+        setStatus('QR lido, mas não foi possível identificar o NP.', 'error');
+      }
+    }
+
+    function iniciarLoopQr(video) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const loop = () => {
+        if (!video.srcObject) {
+          return;
+        }
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (code && code.data) {
+            tratarResultadoQr(code.data);
+            pararLeituraQr();
+            return;
+          }
+        }
+
+        qrAnimationId = requestAnimationFrame(loop);
+      };
+
+      qrAnimationId = requestAnimationFrame(loop);
+    }
+
+    // ======= Service Worker (offline) =======
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
