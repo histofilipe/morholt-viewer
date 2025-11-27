@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Consulta de Registro por NP</title>
+  <title>Consulta por NP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
@@ -120,30 +120,12 @@
       text-align: center;
     }
 
-    /* Área de carregamento de CSV */
-    .csv-controls {
+    /* Imagem de fotoFinalizacao */
+    .foto-finalizacao {
       margin-top: 8px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      font-size: 0.85rem;
-    }
-    .csv-controls button {
-      padding: 6px 10px;
+      max-width: 100%;
       border-radius: 8px;
-      border: none;
-      font-size: 0.85rem;
-      cursor: pointer;
-      background: #28a745;
-      color: white;
-      white-space: nowrap;
-    }
-    .csv-controls button.secondary {
-      background: #6c757d;
-    }
-    .csv-controls input[type="file"] {
-      font-size: 0.8rem;
+      display: block;
     }
   </style>
 
@@ -163,16 +145,6 @@
       <button onclick="iniciarLeituraQr()">📷 Ler QR</button>
     </div>
 
-    <!-- Controles de CSV -->
-    <div class="csv-controls">
-      <button onclick="carregarCsvPadrao()">Usar CSV padrão (dados.csv)</button>
-      <button class="secondary" onclick="document.getElementById('csvFileInput').click()">
-        Carregar CSV do aparelho
-      </button>
-      <input id="csvFileInput" type="file" accept=".csv" style="display:none;" />
-      <span id="csvInfo"></span>
-    </div>
-
     <!-- Área da câmera -->
     <div id="qrArea" class="qr-area">
       <video id="qrVideo" playsinline></video>
@@ -186,20 +158,19 @@
     <table id="resultTable" class="field-table" style="display:none;"></table>
 
     <div class="small">
-      CSV padrão: <strong>dados.csv</strong> (armazenado junto ao aplicativo).<br>
-      Você também pode carregar outro CSV diretamente do aparelho.
+      CSV padrão: <strong>dados.csv</strong> (armazenado junto ao app).<br>
+      A imagem de <strong>fotoFinalizacao</strong> é carregada da internet (precisa ter conexão).
     </div>
   </div>
 
   <script>
-    // 👉 nome do CSV padrão empacotado no app
+    // 👉 nome do CSV padrão
     const CSV_FILE = 'dados.csv';
 
     let registros = [];
     let cabecalho = [];
-    let fonteAtual = 'padrão'; // 'padrão' ou 'local'
 
-    // Campos visíveis
+    // Campos que queremos mostrar (além da foto)
     const CAMPOS_VISIVEIS = [
       'np',
       'material',
@@ -220,6 +191,7 @@
       'hipoteseSerTestada',
       'obs_inicial',
       'obs_final'
+      // fotoFinalizacao será tratada separado
     ];
 
     const LABELS = {
@@ -255,10 +227,6 @@
       statusEl.textContent = msg;
       statusEl.className = 'status';
       if (tipo) statusEl.classList.add(tipo);
-    }
-
-    function setCsvInfo(texto) {
-      document.getElementById('csvInfo').textContent = texto || '';
     }
 
     function mostrarRegistro(registro, npBuscado) {
@@ -302,6 +270,23 @@
         `;
       });
 
+      // 👉 Tratamento especial da fotoFinalizacao
+      const urlFoto = (registro['fotoFinalizacao'] || '').toString().trim();
+      if (urlFoto) {
+        html += `
+          <tr>
+            <th>Foto de Finalização</th>
+            <td>
+              <a href="${urlFoto}" target="_blank" rel="noopener noreferrer">
+                Abrir em nova aba
+              </a><br/>
+              <img src="${urlFoto}" alt="Foto de finalização" class="foto-finalizacao"
+                   onerror="this.style.display='none';" />
+            </td>
+          </tr>
+        `;
+      }
+
       if (!html) {
         tabela.style.display = 'none';
         setStatus('Registro encontrado, mas sem campos visíveis configurados.', 'error');
@@ -343,71 +328,42 @@
       window.history.replaceState({}, '', url);
     }
 
-    // ========= CARREGAMENTO DE CSV =========
+    function carregarCsv() {
+      setStatus('Carregando dados do CSV...');
 
-    function carregarCsvPadrao() {
-      fonteAtual = 'padrão';
-      setStatus('Carregando CSV padrão (dados.csv)...');
-      setCsvInfo('Usando CSV padrão (dados.csv)');
       Papa.parse(CSV_FILE, {
         download: true,
         header: true,
         skipEmptyLines: true,
         delimiter: ';',
-        complete: onCsvCarregado,
+        complete: function(results) {
+          if (results.errors && results.errors.length > 0) {
+            console.warn('Erros ao ler CSV:', results.errors);
+          }
+
+          registros = results.data || [];
+          cabecalho = results.meta && results.meta.fields ? results.meta.fields : [];
+
+          if (registros.length === 0) {
+            setStatus('Nenhum dado encontrado no CSV.', 'error');
+            return;
+          }
+
+          setStatus('Dados carregados. Procurando NP...');
+          const npUrl = getNpFromUrl();
+          if (npUrl) {
+            document.getElementById('manualNp').value = npUrl;
+            buscarPorNp(npUrl);
+          } else {
+            setStatus('Digite um NP, use um QR com NP ou clique em 📷 Ler QR.', '');
+          }
+        },
         error: function(err) {
           console.error(err);
-          setStatus('Erro ao carregar o CSV padrão.', 'error');
+          setStatus('Erro ao carregar o CSV.', 'error');
         }
       });
     }
-
-    function carregarCsvLocal(arquivo) {
-      if (!arquivo) return;
-      fonteAtual = 'local';
-      setStatus(`Carregando CSV local: ${arquivo.name}...`);
-      setCsvInfo(`Usando CSV local: ${arquivo.name}`);
-      Papa.parse(arquivo, {
-        header: true,
-        skipEmptyLines: true,
-        delimiter: ';',
-        complete: onCsvCarregado,
-        error: function(err) {
-          console.error(err);
-          setStatus('Erro ao carregar o CSV local.', 'error');
-        }
-      });
-    }
-
-    function onCsvCarregado(results) {
-      if (results.errors && results.errors.length > 0) {
-        console.warn('Erros ao ler CSV:', results.errors);
-      }
-
-      registros = results.data || [];
-      cabecalho = results.meta && results.meta.fields ? results.meta.fields : [];
-
-      if (registros.length === 0) {
-        setStatus('Nenhum dado encontrado no CSV.', 'error');
-        return;
-      }
-
-      const npUrl = getNpFromUrl();
-      if (npUrl) {
-        document.getElementById('manualNp').value = npUrl;
-        buscarPorNp(npUrl);
-      } else {
-        setStatus('Digite um NP, use um QR ou selecione um CSV.', '');
-      }
-    }
-
-    // input de arquivo local
-    document.getElementById('csvFileInput').addEventListener('change', (event) => {
-      const arquivo = event.target.files[0];
-      if (arquivo) {
-        carregarCsvLocal(arquivo);
-      }
-    });
 
     // ========= LEITURA DE QR COM CÂMERA =========
     let qrStream = null;
@@ -457,8 +413,12 @@
     }
 
     function tratarResultadoQr(texto) {
+      // Mostra o conteúdo lido para debug
+      setStatus('QR lido: ' + texto, 'success');
+
       let np = null;
 
+      // 1) Tenta interpretar como URL com ?np=
       try {
         const url = new URL(texto);
         const param = url.searchParams.get('np');
@@ -467,12 +427,12 @@
         // não era URL, tudo bem
       }
 
+      // 2) Se não achou via URL, usa o texto inteiro como NP
       if (!np) np = texto;
 
       if (np) {
         document.getElementById('manualNp').value = np;
         buscarPorNp(np);
-        setStatus('QR lido com sucesso.', 'success');
       } else {
         setStatus('QR lido, mas não foi possível identificar o NP.', 'error');
       }
@@ -490,6 +450,13 @@
           canvas.height = video.videoHeight;
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+          if (typeof jsQR === 'undefined') {
+            console.error('jsQR não carregado.');
+            setStatus('Erro: biblioteca jsQR não carregada.', 'error');
+            pararLeituraQr();
+            return;
+          }
 
           const code = jsQR(imageData.data, imageData.width, imageData.height);
           if (code && code.data) {
@@ -513,8 +480,8 @@
       });
     }
 
-    // Carrega o CSV padrão na primeira vez
-    carregarCsvPadrao();
+    // Carrega o CSV na primeira vez
+    carregarCsv();
   </script>
 </body>
 </html>
