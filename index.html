@@ -25,6 +25,63 @@
       margin-top: 0;
       text-align: center;
     }
+
+    /* Header com logos esquerda/direita e título abaixo */
+    .app-header {
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 6px;
+    }
+
+    .header-logo {
+      height: 36px;
+      max-width: 200px;
+      object-fit: contain;
+      display: block;
+    }
+
+    @media (min-width: 768px) {
+      .header-logo {
+        height: 48px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header-top {
+        justify-content: center;
+      }
+      .header-logo {
+        height: 30px;
+        max-width: 160px;
+      }
+    }
+
+    .app-title-block {
+      text-align: center;
+    }
+
+    .app-title-block h1 {
+      font-size: 1.15rem;
+      margin: 0;
+      text-align: center;
+    }
+
+    .app-subtitle {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin: 2px 0 0;
+      text-align: center;
+    }
+
     .np-highlight {
       font-weight: bold;
       font-size: 1.1rem;
@@ -146,10 +203,40 @@
       font-size: 0.8rem;
     }
 
-    /* Imagem de fotoFinalizacao */
+    /* Foto de Finalização */
+    .foto-label {
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    .foto-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .foto-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .foto-actions a {
+      font-size: 0.85rem;
+    }
+    .btn-baixar-foto {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.8rem;
+      background: #007bff;
+      color: #fff;
+    }
     .foto-finalizacao {
       margin-top: 8px;
       max-width: 100%;
+      width: 100%;
       border-radius: 8px;
       display: block;
     }
@@ -162,7 +249,24 @@
 </head>
 <body>
   <div class="container">
-    <h1>Consulta de Registro por NP</h1>
+    <header class="app-header">
+      <div class="header-top">
+        <!-- Logo esquerdo -->
+        <img src="./imgs/logo_edr9_cbmm.jpg"
+             alt="Projeto EDR9 | CBMM"
+             class="header-logo" />
+
+        <!-- Logo direito -->
+        <img src="./imgs/logo_vaz_intangivel.jpg"
+             alt="Intangível | Vaz"
+             class="header-logo" />
+      </div>
+
+      <div class="app-title-block">
+        <h1>Morholt Viewer</h1>
+        <p class="app-subtitle">Consulta rápida de NP</p>
+      </div>
+    </header>
 
     <!-- Busca manual + botão de câmera -->
     <div class="search-box">
@@ -194,9 +298,8 @@
     <table id="resultTable" class="field-table" style="display:none;"></table>
 
     <div class="small">
-      CSV padrão: <strong>dados.csv</strong> (empacotado).<br>
-      Você também pode carregar outro CSV do aparelho.<br>
-      A imagem de <strong>fotoFinalizacao</strong> vem da internet / Cloud Storage.
+      <strong>Programa de Gestão do Patrimônio Arqueológico - Estrutura de Disposição de Rejeitos/Resíduos 9 (EDR 9)</strong> .<br> 
+      <strong>Portaria 01514.002457/2018-69</strong>.
     </div>
   </div>
 
@@ -208,6 +311,7 @@
     let cabecalho = [];
     let fonteAtual = 'padrão'; // 'padrão' ou 'local'
 
+    // deixamos essa constante aqui se quiser reaproveitar no futuro
     const CAMPOS_VISIVEIS = [
       'np',
       'material',
@@ -228,7 +332,6 @@
       'hipoteseSerTestada',
       'obs_inicial',
       'obs_final'
-      // fotoFinalizacao é tratada separado
     ];
 
     const LABELS = {
@@ -270,6 +373,18 @@
       document.getElementById('csvInfo').textContent = texto || '';
     }
 
+    function addRow(htmlArray, label, value) {
+      if (value === undefined || value === null) return;
+      const texto = value.toString().trim();
+      if (!texto) return;
+      htmlArray.push(`
+        <tr>
+          <th>${label}</th>
+          <td>${texto}</td>
+        </tr>
+      `);
+    }
+
     function mostrarRegistro(registro, npBuscado) {
       const npInfo = document.getElementById('npInfo');
       const tabela = document.getElementById('resultTable');
@@ -282,59 +397,79 @@
         return;
       }
 
-      let html = '';
+      const htmlParts = [];
 
-      CAMPOS_VISIVEIS.forEach(col => {
-        if (col === 'sitio') {
-          const valorSitio = registro['sitio'] || registro['added_sitio'];
-          if (valorSitio && valorSitio.trim() !== '') {
-            html += `
-              <tr>
-                <th>${LABELS['sitio']}</th>
-                <td>${valorSitio}</td>
-              </tr>
-            `;
-          }
-          return;
-        }
+      // 1) Sítio (sitio ou added_sitio)
+      const valorSitio = (registro['sitio'] || registro['added_sitio'] || '').toString().trim();
+      addRow(htmlParts, 'Sítio', valorSitio);
 
-        const valor = registro[col];
-        if (valor === null || valor === undefined) return;
-        if (valor.toString().trim() === '') return;
+      // 2) NP
+      const valorNp = (registro['np'] || registro['NP'] || '').toString().trim();
+      addRow(htmlParts, 'NP', valorNp);
 
-        const label = LABELS[col] || col;
-        html += `
-          <tr>
-            <th>${label}</th>
-            <td>${valor}</td>
-          </tr>
-        `;
-      });
+      // 3) Quantidade (NOVO, logo após NP)
+      addRow(htmlParts, 'Quantidade', registro['qtde']);
 
-      // 👉 fotoFinalizacao: link + imagem
-      const urlFoto = (registro['fotoFinalizacao'] || '').toString().trim();
+      // 4) Foto de Finalização (linha especial com colspan e imagem grande)
+      const urlFotoBruta = (registro['fotoFinalizacao'] || '').toString().trim();
+      const urlFoto = normalizarUrlFoto(urlFotoBruta);
+      const urlFotoParaOnclick = urlFotoBruta.replace(/'/g, "\\'");
       if (urlFoto) {
-        html += `
+        htmlParts.push(`
           <tr>
-            <th>Foto de Finalização</th>
-            <td>
-              <a href="${urlFoto}" target="_blank" rel="noopener noreferrer">
-                Abrir em nova aba
-              </a><br/>
+            <td colspan="2">
+              <div class="foto-header">
+                <span class="foto-label">Foto de Finalização:</span>
+                <div class="foto-actions">
+                  <a href="${urlFoto}" target="_blank" rel="noopener noreferrer">
+                    Abrir em nova aba
+                  </a>
+                  <button type="button" class="btn-baixar-foto" onclick="baixarFoto('${urlFotoParaOnclick}')">
+                    Baixar imagem
+                  </button>
+                </div>
+              </div>
               <img src="${urlFoto}" alt="Foto de finalização" class="foto-finalizacao"
                    onerror="this.style.display='none';" />
             </td>
           </tr>
-        `;
+        `);
       }
 
-      if (!html) {
+      // 5) Data da Foto
+      addRow(htmlParts, 'Data da Foto', registro['dateFoto']);
+
+      // 6) Lócus
+      addRow(htmlParts, 'Lócus', registro['locus']);
+
+      // 7) UE
+      addRow(htmlParts, 'UE', registro['UE']);
+
+      // 8) Quadrícula - Letra
+      addRow(htmlParts, 'Quadrícula - Letra', registro['quadriculaLetra']);
+
+      // 9) Quadrícula - Número
+      addRow(htmlParts, 'Quadrícula - Número', registro['quadriculaNumero']);
+
+      // 10) Nível
+      addRow(htmlParts, 'Nível', registro['nivel']);
+
+      // 11) Latitude, Longitude, Altitude
+      addRow(htmlParts, 'Latitude (graus)', registro['latitude_degrees']);
+      addRow(htmlParts, 'Longitude (graus)', registro['longitude_degrees']);
+      addRow(htmlParts, 'Altitude (m)', registro['_altitude']);
+
+      // 12) Tipo de Atividade e Origem do Material
+      addRow(htmlParts, 'Tipo de Atividade', registro['branchTipoAtividade']);
+      addRow(htmlParts, 'Origem do Material', registro['branchOrigemMaterial']);
+
+      if (htmlParts.length === 0) {
         tabela.style.display = 'none';
         setStatus('Registro encontrado, mas sem campos visíveis configurados.', 'error');
         return;
       }
 
-      tabela.innerHTML = html;
+      tabela.innerHTML = htmlParts.join('');
       tabela.style.display = 'table';
       setStatus('Registro encontrado com sucesso.', 'success');
     }
@@ -536,6 +671,47 @@
       };
 
       qrAnimationId = requestAnimationFrame(loop);
+    }
+
+    // ========= FOTO FINALIZAÇÃO: normalização de URL + download =========
+    function normalizarUrlFoto(url) {
+      if (!url) return '';
+      url = url.trim();
+      // Converte links do console do Google Cloud Storage para URL direta do objeto
+      if (url.startsWith('https://storage.cloud.google.com/')) {
+        return url.replace('https://storage.cloud.google.com/', 'https://storage.googleapis.com/');
+      }
+      return url;
+    }
+
+    async function baixarFoto(urlOriginal) {
+      try {
+        const url = normalizarUrlFoto(urlOriginal);
+        if (!url) {
+          alert('Nenhuma URL de foto disponível.');
+          return;
+        }
+
+        const resposta = await fetch(url, { mode: 'cors' });
+        if (!resposta.ok) {
+          throw new Error('Resposta HTTP inválida: ' + resposta.status);
+        }
+
+        const blob = await resposta.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const nomeArquivo = (url.split('/').pop() || 'foto-finalizacao').split('?')[0];
+
+        a.href = blobUrl;
+        a.download = nomeArquivo || 'foto-finalizacao';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+      } catch (erro) {
+        console.error('Erro ao baixar a foto:', erro);
+        alert('Não foi possível baixar a imagem. Verifique a conexão ou se o arquivo é público.');
+      }
     }
 
     // ========= SERVICE WORKER =========
