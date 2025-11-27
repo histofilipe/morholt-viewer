@@ -15,70 +15,16 @@
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background: #ffffff;
+      background: white;
       padding: 16px;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
+
+    /* Título */
     h1 {
       font-size: 1.3rem;
-      margin-top: 0;
-      text-align: center;
-    }
-
-    /* Header com logos esquerda/direita e título abaixo */
-    .app-header {
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      margin-bottom: 6px;
-    }
-
-    .header-logo {
-      height: 36px;
-      max-width: 200px;
-      object-fit: contain;
-      display: block;
-    }
-
-    @media (min-width: 768px) {
-      .header-logo {
-        height: 48px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .header-top {
-        justify-content: center;
-      }
-      .header-logo {
-        height: 30px;
-        max-width: 160px;
-      }
-    }
-
-    .app-title-block {
-      text-align: center;
-    }
-
-    .app-title-block h1 {
-      font-size: 1.15rem;
-      margin: 0;
-      text-align: center;
-    }
-
-    .app-subtitle {
-      font-size: 0.8rem;
-      color: #6b7280;
-      margin: 2px 0 0;
+      margin: 0 0 12px;
       text-align: center;
     }
 
@@ -88,6 +34,7 @@
       margin: 8px 0 16px;
       text-align: center;
     }
+
     .status {
       margin: 8px 0 16px;
       font-size: 0.95rem;
@@ -103,6 +50,7 @@
       background: #e5ffe9;
       color: #006614;
     }
+
     .field-table {
       width: 100%;
       border-collapse: collapse;
@@ -117,74 +65,47 @@
     .field-table th {
       text-align: left;
       width: 40%;
+      color: #374151;
       font-weight: 600;
-      background: #fafafa;
     }
-    .field-table tr:nth-child(even) td {
-      background: #fcfcfc;
+    .field-table td {
+      color: #111827;
+      word-break: break-word;
     }
-    .small {
-      font-size: 0.8rem;
-      color: #777;
-      margin-top: 16px;
-      text-align: center;
-    }
+
     .search-box {
       display: flex;
       gap: 8px;
       margin-bottom: 12px;
-      flex-wrap: wrap;
     }
-    .search-box input {
+    .search-box input[type="text"] {
       flex: 1;
-      min-width: 140px;
-      padding: 8px 10px;
+      padding: 8px;
+      font-size: 1rem;
       border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 0.95rem;
+      border: 1px solid #d1d5db;
     }
     .search-box button {
       padding: 8px 12px;
+      font-size: 0.95rem;
       border-radius: 8px;
       border: none;
-      font-size: 0.95rem;
       cursor: pointer;
-      background: #007bff;
+      background: #2563eb;
       color: white;
       white-space: nowrap;
     }
-    .search-box button:active {
-      opacity: 0.8;
+    .camera-button {
+      background: #10b981;
     }
 
-    /* Área de câmera / QR */
-    .qr-area {
-      margin-top: 12px;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-    .qr-area video {
-      width: 100%;
-      max-width: 400px;
-      border-radius: 12px;
-      background: #000;
-    }
-    .qr-hint {
-      font-size: 0.8rem;
-      color: #555;
-      text-align: center;
-    }
-
-    /* Controles de CSV */
     .csv-controls {
-      margin-top: 8px;
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
       font-size: 0.85rem;
+      margin-bottom: 12px;
     }
     .csv-controls button {
       padding: 6px 10px;
@@ -211,26 +132,28 @@
     .foto-header {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
       align-items: center;
+      gap: 8px;
       margin-bottom: 6px;
     }
     .foto-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-    }
-    .foto-actions a {
+      gap: 6px;
       font-size: 0.85rem;
+    }
+    .foto-link {
+      color: #2563eb;
+      text-decoration: underline;
+      cursor: pointer;
     }
     .btn-baixar-foto {
       padding: 4px 8px;
-      border-radius: 6px;
+      border-radius: 8px;
       border: none;
       cursor: pointer;
       font-size: 0.8rem;
-      background: #007bff;
+      background: #10b981;
       color: #fff;
     }
     .foto-finalizacao {
@@ -239,6 +162,87 @@
       width: 100%;
       border-radius: 8px;
       display: block;
+    }
+
+    .small {
+      font-size: 0.75rem;
+      color: #4b5563;
+      margin-top: 12px;
+      text-align: justify;
+    }
+
+    /* Área da câmera para QR */
+    #cameraContainer {
+      display: none;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+    }
+    #qrVideo {
+      width: 100%;
+      display: block;
+    }
+    .qr-hint {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 4px;
+      text-align: center;
+      color: #fff;
+      font-size: 0.75rem;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      padding: 2px 4px;
+    }
+    .qr-close {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border-radius: 999px;
+      border: none;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    /* Logos no rodapé */
+    .footer-logos {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-logo-img {
+      height: 40px;
+      object-fit: contain;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+      .container {
+        padding: 12px;
+      }
+      .search-box {
+        flex-direction: column;
+      }
+      .search-box button {
+        width: 100%;
+        justify-content: center;
+      }
+      .csv-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .csv-controls button {
+        width: 100%;
+      }
     }
   </style>
 
@@ -249,44 +253,27 @@
 </head>
 <body>
   <div class="container">
-    <header class="app-header">
-      <div class="header-top">
-        <!-- Logo esquerdo -->
-        <img src="./imgs/logo_edr9_cbmm.jpg"
-             alt="Projeto EDR9 | CBMM"
-             class="header-logo" />
-
-        <!-- Logo direito -->
-        <img src="./imgs/logo_vaz_intangivel.jpg"
-             alt="Intangível | Vaz"
-             class="header-logo" />
-      </div>
-
-      <div class="app-title-block">
-        <h1>Morholt Viewer</h1>
-        <p class="app-subtitle">Consulta rápida de NP</p>
-      </div>
-    </header>
+    <h1>Consulta rápida de NP</h1>
 
     <!-- Busca manual + botão de câmera -->
     <div class="search-box">
       <input id="manualNp" type="text" placeholder="Digite o NP (ex: ab-011)" />
       <button onclick="buscarManual()">Buscar</button>
-      <button onclick="iniciarLeituraQr()">📷 Ler QR</button>
+      <button onclick="iniciarCamera()" class="camera-button">📷 Ler QR</button>
     </div>
 
-    <!-- Controles de CSV (padrão + arquivo local) -->
+    <!-- Controles de CSV -->
     <div class="csv-controls">
-      <button onclick="carregarCsvPadrao()">Usar CSV padrão (dados.csv)</button>
-      <button class="secondary" onclick="document.getElementById('csvFileInput').click()">
+      <button type="button" onclick="carregarCsvPadrao()">Usar CSV padrão (dados.csv)</button>
+      <button type="button" class="secondary" onclick="document.getElementById('csvInput').click()">
         Carregar CSV do aparelho
       </button>
-      <input id="csvFileInput" type="file" accept=".csv" style="display:none;" />
-      <span id="csvInfo"></span>
+      <input id="csvInput" type="file" accept=".csv" style="display:none;" />
     </div>
 
-    <!-- Área da câmera -->
-    <div id="qrArea" class="qr-area">
+    <!-- Área de câmera -->
+    <div id="cameraContainer">
+      <button class="qr-close" onclick="pararCamera()">Fechar</button>
       <video id="qrVideo" playsinline></video>
       <div class="qr-hint">
         Aponte a câmera para o QR Code. A leitura para automaticamente ao encontrar um código.
@@ -298,63 +285,22 @@
     <table id="resultTable" class="field-table" style="display:none;"></table>
 
     <div class="small">
-      <strong>Programa de Gestão do Patrimônio Arqueológico - Estrutura de Disposição de Rejeitos/Resíduos 9 (EDR 9)</strong> .<br> 
-      <strong>Portaria 01514.002457/2018-69</strong>.
+      <strong>Programa de Gestão do Patrimônio Arqueológico - Estrutura de Disposição de Rejeitos/Resíduos 9 (EDR 9)</strong><br>
+      <strong>Portaria 01514.002457/2018-69</strong>
+    </div>
+
+    <div class="footer-logos">
+      <img src="./imgs/logo_edr9_cbmm.jpg" class="footer-logo-img" alt="EDR9 CBMM" />
+      <img src="./imgs/logo_vaz_intangivel.jpg" class="footer-logo-img" alt="Vaz Intangível" />
     </div>
   </div>
 
   <script>
-    // 👉 CSV padrão
     const CSV_FILE = 'dados.csv';
 
     let registros = [];
-    let cabecalho = [];
-    let fonteAtual = 'padrão'; // 'padrão' ou 'local'
-
-    // deixamos essa constante aqui se quiser reaproveitar no futuro
-    const CAMPOS_VISIVEIS = [
-      'np',
-      'material',
-      'qtde',
-      'sitio',
-      'added_sitio',
-      'locus',
-      'UE',
-      'nivel',
-      'quadriculaLetra',
-      'quadriculaNumero',
-      'latitude_degrees',
-      'longitude_degrees',
-      '_altitude',
-      'branchTipoAtividade',
-      'branchOrigemMaterial',
-      'dateFoto',
-      'hipoteseSerTestada',
-      'obs_inicial',
-      'obs_final'
-    ];
-
-    const LABELS = {
-      np: 'NP',
-      material: 'Material',
-      qtde: 'Quantidade',
-      sitio: 'Sítio',
-      added_sitio: 'Sítio (derivado)',
-      locus: 'Lócus',
-      UE: 'UE',
-      nivel: 'Nível',
-      quadriculaLetra: 'Quadrícula - Letra',
-      quadriculaNumero: 'Quadrícula - Número',
-      latitude_degrees: 'Latitude (graus)',
-      longitude_degrees: 'Longitude (graus)',
-      _altitude: 'Altitude (m)',
-      branchTipoAtividade: 'Tipo de Atividade',
-      branchOrigemMaterial: 'Origem do Material',
-      dateFoto: 'Data da Foto',
-      hipoteseSerTestada: 'Hipótese a ser testada',
-      obs_inicial: 'Observação inicial',
-      obs_final: 'Observação final'
-    };
+    let streamCamera = null;
+    let qrAtivo = false;
 
     function getNpFromUrl() {
       const params = new URLSearchParams(window.location.search);
@@ -362,341 +308,224 @@
       return np ? np.trim() : null;
     }
 
-    function setStatus(msg, tipo = '') {
+    function setStatus(message, isError = false) {
       const statusEl = document.getElementById('status');
-      statusEl.textContent = msg;
-      statusEl.className = 'status';
-      if (tipo) statusEl.classList.add(tipo);
+      statusEl.textContent = message;
+      statusEl.classList.toggle('error', isError);
+      statusEl.classList.toggle('success', !isError && message);
     }
 
-    function setCsvInfo(texto) {
-      document.getElementById('csvInfo').textContent = texto || '';
+    function limparTabela() {
+      document.getElementById('resultTable').style.display = 'none';
+      document.getElementById('resultTable').innerHTML = '';
+      document.getElementById('npInfo').textContent = '';
     }
 
-    function addRow(htmlArray, label, value) {
-      if (value === undefined || value === null) return;
-      const texto = value.toString().trim();
-      if (!texto) return;
-      htmlArray.push(`
-        <tr>
-          <th>${label}</th>
-          <td>${texto}</td>
-        </tr>
-      `);
+    function normalizarNp(np) {
+      if (!np) return '';
+      return np.toString().trim().toLowerCase();
     }
 
-    function mostrarRegistro(registro, npBuscado) {
-      const npInfo = document.getElementById('npInfo');
-      const tabela = document.getElementById('resultTable');
+    function normalizarUrlFoto(url) {
+      if (!url) return '';
+      let limpa = url.split(/\s+/)[0];
+      limpa = limpa.replace('https://storage.cloud.google.com/', 'https://storage.googleapis.com/');
+      return limpa;
+    }
 
-      npInfo.textContent = npBuscado ? `NP consultado: ${npBuscado}` : '';
+    function carregarCsvPadrao() {
+      setStatus('Carregando CSV padrão...', false);
+      limparTabela();
 
-      if (!registro) {
-        tabela.style.display = 'none';
-        setStatus('Nenhum registro encontrado para este NP.', 'error');
+      fetch(CSV_FILE)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Não foi possível carregar o CSV padrão.');
+          }
+          return response.text();
+        })
+        .then(csvText => {
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            delimiter: ';',
+            complete: function(results) {
+              registros = results.data || [];
+              if (registros.length === 0) {
+                setStatus('CSV padrão carregado, mas está vazio.', true);
+                return;
+              }
+              setStatus('CSV padrão carregado com sucesso.', false);
+
+              const npUrl = getNpFromUrl();
+              if (npUrl) {
+                document.getElementById('manualNp').value = npUrl;
+                buscarPorNp(npUrl);
+              }
+            },
+            error: function(err) {
+              console.error(err);
+              setStatus('Erro ao analisar o CSV padrão.', true);
+            }
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          setStatus('Erro ao carregar CSV padrão. Verifique se o arquivo dados.csv está disponível.', true);
+        });
+    }
+
+    document.getElementById('csvInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      setStatus('Carregando CSV do aparelho...', false);
+      limparTabela();
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        delimiter: ';',
+        complete: function(results) {
+          registros = results.data || [];
+          if (registros.length === 0) {
+            setStatus('CSV carregado, mas não há registros.', true);
+            return;
+          }
+          setStatus('CSV carregado com sucesso a partir do aparelho.', false);
+        },
+        error: function(err) {
+          console.error(err);
+          setStatus('Erro ao analisar o CSV do aparelho.', true);
+        }
+      });
+    });
+
+    function buscarManual() {
+      const np = document.getElementById('manualNp').value;
+      if (!np) {
+        setStatus('Digite um NP para buscar.', true);
+        return;
+      }
+      buscarPorNp(np);
+    }
+
+    function buscarPorNp(np) {
+      if (!registros || registros.length === 0) {
+        setStatus('Nenhum CSV carregado. Carregue um CSV ou use o padrão antes de buscar.', true);
         return;
       }
 
+      const npNormalizado = normalizarNp(np);
+      const registro = registros.find(r => {
+        const v = (r['np'] || r['NP'] || '').toString().trim().toLowerCase();
+        return v === npNormalizado;
+      });
+
+      if (!registro) {
+        limparTabela();
+        setStatus(`NP "${np}" não encontrado no CSV.`, true);
+        return;
+      }
+
+      setStatus('Registro encontrado.', false);
+      mostrarRegistro(registro, np);
+    }
+
+    function mostrarRegistro(registro, npBuscado) {
+      const tabela = document.getElementById('resultTable');
+      tabela.innerHTML = '';
+      tabela.style.display = 'table';
+
+      const npInfo = document.getElementById('npInfo');
+      npInfo.textContent = `NP: ${npBuscado}`;
+
       const htmlParts = [];
 
-      // 1) Sítio (sitio ou added_sitio)
-      const valorSitio = (registro['sitio'] || registro['added_sitio'] || '').toString().trim();
-      addRow(htmlParts, 'Sítio', valorSitio);
-
-      // 2) NP
-      const valorNp = (registro['np'] || registro['NP'] || '').toString().trim();
-      addRow(htmlParts, 'NP', valorNp);
-
-      // 3) Quantidade (NOVO, logo após NP)
-      addRow(htmlParts, 'Quantidade', registro['qtde']);
-
-      // 4) Foto de Finalização (linha especial com colspan e imagem grande)
-      const urlFotoBruta = (registro['fotoFinalizacao'] || '').toString().trim();
-      const urlFoto = normalizarUrlFoto(urlFotoBruta);
-      const urlFotoParaOnclick = urlFotoBruta.replace(/'/g, "\\'");
-      if (urlFoto) {
+      function addRow(label, valor) {
+        if (valor === undefined || valor === null || valor === '') return;
+        const texto = String(valor);
         htmlParts.push(`
           <tr>
-            <td colspan="2">
+            <th>${label}</th>
+            <td>${texto}</td>
+          </tr>
+        `);
+      }
+
+      const sitio = registro['sitio'] || registro['Sítio'] || registro['sitio_nome'];
+      if (sitio) {
+        addRow('Sítio', sitio);
+      }
+
+      const valorNp = registro['np'] || registro['NP'];
+      addRow('NP', valorNp);
+
+      const qtde = registro['qtde'] || registro['QTDE'] || registro['quantidade'];
+      addRow('Quantidade', qtde);
+
+      const urlOriginal = registro['fotoFinalizacao'] || registro['foto_finalizacao'] || registro['FotoFinalizacao'];
+      const urlFoto = normalizarUrlFoto(urlOriginal);
+
+      if (urlFoto) {
+        const urlFotoParaOnclick = urlFoto.replace(/"/g, '&quot;');
+        htmlParts.push(`
+          <tr>
+            <th colspan="2">
               <div class="foto-header">
                 <span class="foto-label">Foto de Finalização:</span>
                 <div class="foto-actions">
-                  <a href="${urlFoto}" target="_blank" rel="noopener noreferrer">
+                  <span class="foto-link" onclick="window.open('${urlFotoParaOnclick}', '_blank')">
                     Abrir em nova aba
-                  </a>
+                  </span>
                   <button type="button" class="btn-baixar-foto" onclick="baixarFoto('${urlFotoParaOnclick}')">
                     Baixar imagem
                   </button>
                 </div>
               </div>
-              <img src="${urlFoto}" alt="Foto de finalização" class="foto-finalizacao"
+            </th>
+          </tr>
+          <tr>
+            <td colspan="2">
+              <img src="${urlFotoParaOnclick}" alt="Foto de Finalização" class="foto-finalizacao"
                    onerror="this.style.display='none';" />
             </td>
           </tr>
         `);
       }
 
-      // 5) Data da Foto
-      addRow(htmlParts, 'Data da Foto', registro['dateFoto']);
+      const dataFoto = registro['dateFoto'] || registro['data_foto'] || registro['DataFoto'];
+      addRow('Data da Foto', dataFoto);
 
-      // 6) Lócus
-      addRow(htmlParts, 'Lócus', registro['locus']);
+      addRow('Lócus', registro['locus']);
+      addRow('UE', registro['UE']);
 
-      // 7) UE
-      addRow(htmlParts, 'UE', registro['UE']);
+      addRow('Quadrícula - Letra', registro['quadriculaLetra']);
+      addRow('Quadrícula - Número', registro['quadriculaNumero']);
 
-      // 8) Quadrícula - Letra
-      addRow(htmlParts, 'Quadrícula - Letra', registro['quadriculaLetra']);
+      addRow('Nível', registro['nivel']);
 
-      // 9) Quadrícula - Número
-      addRow(htmlParts, 'Quadrícula - Número', registro['quadriculaNumero']);
+      addRow('Latitude (graus)', registro['latitude_degrees']);
+      addRow('Longitude (graus)', registro['longitude_degrees']);
+      addRow('Altitude (m)', registro['_altitude']);
 
-      // 10) Nível
-      addRow(htmlParts, 'Nível', registro['nivel']);
-
-      // 11) Latitude, Longitude, Altitude
-      addRow(htmlParts, 'Latitude (graus)', registro['latitude_degrees']);
-      addRow(htmlParts, 'Longitude (graus)', registro['longitude_degrees']);
-      addRow(htmlParts, 'Altitude (m)', registro['_altitude']);
-
-      // 12) Tipo de Atividade e Origem do Material
-      addRow(htmlParts, 'Tipo de Atividade', registro['branchTipoAtividade']);
-      addRow(htmlParts, 'Origem do Material', registro['branchOrigemMaterial']);
-
-      if (htmlParts.length === 0) {
-        tabela.style.display = 'none';
-        setStatus('Registro encontrado, mas sem campos visíveis configurados.', 'error');
-        return;
-      }
+      addRow('Tipo de Atividade', registro['branchTipoAtividade']);
+      addRow('Origem do Material', registro['branchOrigemMaterial']);
 
       tabela.innerHTML = htmlParts.join('');
-      tabela.style.display = 'table';
-      setStatus('Registro encontrado com sucesso.', 'success');
     }
 
-    function buscarPorNp(npValor) {
-      if (!npValor) {
-        setStatus('Informe um NP para buscar.', 'error');
-        mostrarRegistro(null, null);
-        return;
-      }
-
-      const npNormalizado = npValor.toString().trim().toLowerCase();
-
-      const registro = registros.find(r => {
-        const v = (r['np'] || r['NP'] || '').toString().trim().toLowerCase();
-        return v === npNormalizado;
-      });
-
-      mostrarRegistro(registro, npValor);
-    }
-
-    function buscarManual() {
-      const valor = document.getElementById('manualNp').value;
-      buscarPorNp(valor);
-
-      const url = new URL(window.location);
-      if (valor) {
-        url.searchParams.set('np', valor);
-      } else {
-        url.searchParams.delete('np');
-      }
-      window.history.replaceState({}, '', url);
-    }
-
-    // ========= CARREGAMENTO DE CSV =========
-
-    function carregarCsvPadrao() {
-      fonteAtual = 'padrão';
-      setStatus('Carregando CSV padrão (dados.csv)...');
-      setCsvInfo('Usando CSV padrão (dados.csv)');
-      Papa.parse(CSV_FILE, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        delimiter: ';',
-        complete: onCsvCarregado,
-        error: function(err) {
-          console.error(err);
-          setStatus('Erro ao carregar o CSV padrão.', 'error');
-        }
-      });
-    }
-
-    function carregarCsvLocal(arquivo) {
-      if (!arquivo) return;
-      fonteAtual = 'local';
-      setStatus(`Carregando CSV local: ${arquivo.name}...`);
-      setCsvInfo(`Usando CSV local: ${arquivo.name}`);
-      Papa.parse(arquivo, {
-        header: true,
-        skipEmptyLines: true,
-        delimiter: ';',
-        complete: onCsvCarregado,
-        error: function(err) {
-          console.error(err);
-          setStatus('Erro ao carregar o CSV local.', 'error');
-        }
-      });
-    }
-
-    function onCsvCarregado(results) {
-      if (results.errors && results.errors.length > 0) {
-        console.warn('Erros ao ler CSV:', results.errors);
-      }
-
-      registros = results.data || [];
-      cabecalho = results.meta && results.meta.fields ? results.meta.fields : [];
-
-      if (registros.length === 0) {
-        setStatus('Nenhum dado encontrado no CSV.', 'error');
-        return;
-      }
-
-      const npUrl = getNpFromUrl();
-      if (npUrl) {
-        document.getElementById('manualNp').value = npUrl;
-        buscarPorNp(npUrl);
-      } else {
-        setStatus('Digite um NP, use um QR ou selecione um CSV.', '');
-      }
-    }
-
-    document.getElementById('csvFileInput').addEventListener('change', (event) => {
-      const arquivo = event.target.files[0];
-      if (arquivo) {
-        carregarCsvLocal(arquivo);
-      }
-    });
-
-    // ========= LEITURA DE QR COM CÂMERA =========
-    let qrStream = null;
-    let qrAnimationId = null;
-
-    async function iniciarLeituraQr() {
-      const qrArea = document.getElementById('qrArea');
-      const video = document.getElementById('qrVideo');
-
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setStatus('Este dispositivo/navegador não suporta acesso à câmera.', 'error');
-        return;
-      }
-
+    async function baixarFoto(url) {
       try {
-        setStatus('Abrindo câmera para leitura de QR...', '');
-        qrArea.style.display = 'flex';
-
-        qrStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-          audio: false
-        });
-
-        video.srcObject = qrStream;
-        await video.play();
-
-        iniciarLoopQr(video);
-      } catch (err) {
-        console.error(err);
-        setStatus('Não foi possível acessar a câmera (permissão negada ou erro).', 'error');
-      }
-    }
-
-    function pararLeituraQr() {
-      if (qrAnimationId) {
-        cancelAnimationFrame(qrAnimationId);
-        qrAnimationId = null;
-      }
-      if (qrStream) {
-        qrStream.getTracks().forEach(t => t.stop());
-        qrStream = null;
-      }
-      const qrArea = document.getElementById('qrArea');
-      const video = document.getElementById('qrVideo');
-      video.srcObject = null;
-      qrArea.style.display = 'none';
-    }
-
-    function tratarResultadoQr(texto) {
-      setStatus('QR lido: ' + texto, 'success');
-
-      let np = null;
-
-      try {
-        const url = new URL(texto);
-        const param = url.searchParams.get('np');
-        if (param) np = param;
-      } catch (e) {
-        // não era URL
-      }
-
-      if (!np) np = texto;
-
-      if (np) {
-        document.getElementById('manualNp').value = np;
-        buscarPorNp(np);
-      } else {
-        setStatus('QR lido, mas não foi possível identificar o NP.', 'error');
-      }
-    }
-
-    function iniciarLoopQr(video) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-
-      const loop = () => {
-        if (!video.srcObject) return;
-
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-          if (typeof jsQR === 'undefined') {
-            console.error('jsQR não carregado.');
-            setStatus('Erro: biblioteca jsQR não carregada.', 'error');
-            pararLeituraQr();
-            return;
-          }
-
-          const code = jsQR(imageData.data, imageData.width, imageData.height);
-          if (code && code.data) {
-            tratarResultadoQr(code.data);
-            pararLeituraQr();
-            return;
-          }
-        }
-
-        qrAnimationId = requestAnimationFrame(loop);
-      };
-
-      qrAnimationId = requestAnimationFrame(loop);
-    }
-
-    // ========= FOTO FINALIZAÇÃO: normalização de URL + download =========
-    function normalizarUrlFoto(url) {
-      if (!url) return '';
-      url = url.trim();
-      // Converte links do console do Google Cloud Storage para URL direta do objeto
-      if (url.startsWith('https://storage.cloud.google.com/')) {
-        return url.replace('https://storage.cloud.google.com/', 'https://storage.googleapis.com/');
-      }
-      return url;
-    }
-
-    async function baixarFoto(urlOriginal) {
-      try {
-        const url = normalizarUrlFoto(urlOriginal);
         if (!url) {
-          alert('Nenhuma URL de foto disponível.');
+          alert('Nenhuma URL de foto disponível para download.');
           return;
         }
 
-        const resposta = await fetch(url, { mode: 'cors' });
+        const resposta = await fetch(url);
         if (!resposta.ok) {
-          throw new Error('Resposta HTTP inválida: ' + resposta.status);
+          throw new Error('Resposta de rede não OK');
         }
-
         const blob = await resposta.blob();
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -714,7 +543,84 @@
       }
     }
 
-    // ========= SERVICE WORKER =========
+    async function iniciarCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('A câmera não é suportada neste dispositivo ou navegador.');
+        return;
+      }
+
+      const cameraContainer = document.getElementById('cameraContainer');
+      const video = document.getElementById('qrVideo');
+
+      cameraContainer.style.display = 'block';
+
+      try {
+        streamCamera = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+        video.srcObject = streamCamera;
+        video.setAttribute('playsinline', true);
+        video.play();
+
+        qrAtivo = true;
+        lerLoopQrCode(video);
+      } catch (err) {
+        console.error(err);
+        alert('Não foi possível acessar a câmera.');
+        cameraContainer.style.display = 'none';
+      }
+    }
+
+    function pararCamera() {
+      qrAtivo = false;
+      if (streamCamera) {
+        const tracks = streamCamera.getTracks();
+        tracks.forEach(track => track.stop());
+        streamCamera = null;
+      }
+      document.getElementById('cameraContainer').style.display = 'none';
+    }
+
+    function lerLoopQrCode(video) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const loop = () => {
+        if (!qrAtivo) return;
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+          if (code && code.data) {
+            qrAtivo = false;
+            pararCamera();
+
+            const conteudo = code.data.trim();
+            let npLido = conteudo;
+
+            try {
+              const url = new URL(conteudo);
+              const paramNp = url.searchParams.get('np');
+              if (paramNp) {
+                npLido = paramNp;
+              }
+            } catch (e) {}
+
+            document.getElementById('manualNp').value = npLido;
+            buscarPorNp(npLido);
+            return;
+          }
+        }
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
@@ -722,7 +628,6 @@
       });
     }
 
-    // Carrega o CSV padrão na primeira vez
     carregarCsvPadrao();
   </script>
 </body>
