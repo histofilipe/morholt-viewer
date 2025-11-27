@@ -100,10 +100,10 @@
       opacity: 0.8;
     }
 
-    /* Área de câmera / QR */
+    /* Área da câmera / QR */
     .qr-area {
       margin-top: 12px;
-      display: none;
+      display: none;            /* começa escondida */
       flex-direction: column;
       align-items: center;
       gap: 8px;
@@ -130,14 +130,14 @@
   <div class="container">
     <h1>Consulta de Registro por NP</h1>
 
-    <!-- Busca manual + leitura de QR -->
+    <!-- Busca manual + botão de câmera -->
     <div class="search-box">
       <input id="manualNp" type="text" placeholder="Digite o NP (ex: ab-011)" />
       <button onclick="buscarManual()">Buscar</button>
       <button onclick="iniciarLeituraQr()">Ler QR com câmera</button>
     </div>
 
-    <!-- Área de câmera -->
+    <!-- Área da câmera -->
     <div id="qrArea" class="qr-area">
       <video id="qrVideo" playsinline></video>
       <div class="qr-hint">
@@ -151,10 +151,13 @@
 
     <div class="small">
       Visualização offline baseada no arquivo <strong>dados.csv</strong>.
+      <!-- Se o seu CSV tiver outro nome, troque aqui e na constante CSV_FILE -->
     </div>
   </div>
 
   <script>
+    // 👉 Se o seu arquivo tiver outro nome (por ex: 'unificado_consolidado v26_10 v1.csv'),
+    // troque aqui:
     const CSV_FILE = 'dados.csv';
 
     let registros = [];
@@ -308,7 +311,7 @@
         download: true,
         header: true,
         skipEmptyLines: true,
-        delimiter: ';',
+        delimiter: ';',   // 👈 seu arquivo usa ponto e vírgula
         complete: function(results) {
           if (results.errors && results.errors.length > 0) {
             console.warn('Erros ao ler CSV:', results.errors);
@@ -328,7 +331,7 @@
             document.getElementById('manualNp').value = npUrl;
             buscarPorNp(npUrl);
           } else {
-            setStatus('Digite um NP, use um QR Code com ?np=... ou clique em "Ler QR com câmera".', '');
+            setStatus('Digite um NP, use um QR com ?np=... ou clique em "Ler QR com câmera".', '');
           }
         },
         error: function(err) {
