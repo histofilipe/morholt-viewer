@@ -100,7 +100,7 @@
       opacity: 0.8;
     }
 
-    /* Área da câmera / QR */
+    /* Área de câmera / QR */
     .qr-area {
       margin-top: 12px;
       display: none;
@@ -118,6 +118,32 @@
       font-size: 0.8rem;
       color: #555;
       text-align: center;
+    }
+
+    /* Controles de CSV */
+    .csv-controls {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+    .csv-controls button {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: #28a745;
+      color: white;
+      white-space: nowrap;
+    }
+    .csv-controls button.secondary {
+      background: #6c757d;
+    }
+    .csv-controls input[type="file"] {
+      font-size: 0.8rem;
     }
 
     /* Imagem de fotoFinalizacao */
@@ -145,6 +171,16 @@
       <button onclick="iniciarLeituraQr()">📷 Ler QR</button>
     </div>
 
+    <!-- Controles de CSV (padrão + arquivo local) -->
+    <div class="csv-controls">
+      <button onclick="carregarCsvPadrao()">Usar CSV padrão (dados.csv)</button>
+      <button class="secondary" onclick="document.getElementById('csvFileInput').click()">
+        Carregar CSV do aparelho
+      </button>
+      <input id="csvFileInput" type="file" accept=".csv" style="display:none;" />
+      <span id="csvInfo"></span>
+    </div>
+
     <!-- Área da câmera -->
     <div id="qrArea" class="qr-area">
       <video id="qrVideo" playsinline></video>
@@ -158,19 +194,20 @@
     <table id="resultTable" class="field-table" style="display:none;"></table>
 
     <div class="small">
-      CSV padrão: <strong>dados.csv</strong> (armazenado junto ao app).<br>
-      A imagem de <strong>fotoFinalizacao</strong> é carregada da internet (precisa ter conexão).
+      CSV padrão: <strong>dados.csv</strong> (empacotado).<br>
+      Você também pode carregar outro CSV do aparelho.<br>
+      A imagem de <strong>fotoFinalizacao</strong> vem da internet / Cloud Storage.
     </div>
   </div>
 
   <script>
-    // 👉 nome do CSV padrão
+    // 👉 CSV padrão
     const CSV_FILE = 'dados.csv';
 
     let registros = [];
     let cabecalho = [];
+    let fonteAtual = 'padrão'; // 'padrão' ou 'local'
 
-    // Campos que queremos mostrar (além da foto)
     const CAMPOS_VISIVEIS = [
       'np',
       'material',
@@ -191,7 +228,7 @@
       'hipoteseSerTestada',
       'obs_inicial',
       'obs_final'
-      // fotoFinalizacao será tratada separado
+      // fotoFinalizacao é tratada separado
     ];
 
     const LABELS = {
@@ -227,6 +264,10 @@
       statusEl.textContent = msg;
       statusEl.className = 'status';
       if (tipo) statusEl.classList.add(tipo);
+    }
+
+    function setCsvInfo(texto) {
+      document.getElementById('csvInfo').textContent = texto || '';
     }
 
     function mostrarRegistro(registro, npBuscado) {
@@ -270,7 +311,7 @@
         `;
       });
 
-      // 👉 Tratamento especial da fotoFinalizacao
+      // 👉 fotoFinalizacao: link + imagem
       const urlFoto = (registro['fotoFinalizacao'] || '').toString().trim();
       if (urlFoto) {
         html += `
@@ -328,42 +369,70 @@
       window.history.replaceState({}, '', url);
     }
 
-    function carregarCsv() {
-      setStatus('Carregando dados do CSV...');
+    // ========= CARREGAMENTO DE CSV =========
 
+    function carregarCsvPadrao() {
+      fonteAtual = 'padrão';
+      setStatus('Carregando CSV padrão (dados.csv)...');
+      setCsvInfo('Usando CSV padrão (dados.csv)');
       Papa.parse(CSV_FILE, {
         download: true,
         header: true,
         skipEmptyLines: true,
         delimiter: ';',
-        complete: function(results) {
-          if (results.errors && results.errors.length > 0) {
-            console.warn('Erros ao ler CSV:', results.errors);
-          }
-
-          registros = results.data || [];
-          cabecalho = results.meta && results.meta.fields ? results.meta.fields : [];
-
-          if (registros.length === 0) {
-            setStatus('Nenhum dado encontrado no CSV.', 'error');
-            return;
-          }
-
-          setStatus('Dados carregados. Procurando NP...');
-          const npUrl = getNpFromUrl();
-          if (npUrl) {
-            document.getElementById('manualNp').value = npUrl;
-            buscarPorNp(npUrl);
-          } else {
-            setStatus('Digite um NP, use um QR com NP ou clique em 📷 Ler QR.', '');
-          }
-        },
+        complete: onCsvCarregado,
         error: function(err) {
           console.error(err);
-          setStatus('Erro ao carregar o CSV.', 'error');
+          setStatus('Erro ao carregar o CSV padrão.', 'error');
         }
       });
     }
+
+    function carregarCsvLocal(arquivo) {
+      if (!arquivo) return;
+      fonteAtual = 'local';
+      setStatus(`Carregando CSV local: ${arquivo.name}...`);
+      setCsvInfo(`Usando CSV local: ${arquivo.name}`);
+      Papa.parse(arquivo, {
+        header: true,
+        skipEmptyLines: true,
+        delimiter: ';',
+        complete: onCsvCarregado,
+        error: function(err) {
+          console.error(err);
+          setStatus('Erro ao carregar o CSV local.', 'error');
+        }
+      });
+    }
+
+    function onCsvCarregado(results) {
+      if (results.errors && results.errors.length > 0) {
+        console.warn('Erros ao ler CSV:', results.errors);
+      }
+
+      registros = results.data || [];
+      cabecalho = results.meta && results.meta.fields ? results.meta.fields : [];
+
+      if (registros.length === 0) {
+        setStatus('Nenhum dado encontrado no CSV.', 'error');
+        return;
+      }
+
+      const npUrl = getNpFromUrl();
+      if (npUrl) {
+        document.getElementById('manualNp').value = npUrl;
+        buscarPorNp(npUrl);
+      } else {
+        setStatus('Digite um NP, use um QR ou selecione um CSV.', '');
+      }
+    }
+
+    document.getElementById('csvFileInput').addEventListener('change', (event) => {
+      const arquivo = event.target.files[0];
+      if (arquivo) {
+        carregarCsvLocal(arquivo);
+      }
+    });
 
     // ========= LEITURA DE QR COM CÂMERA =========
     let qrStream = null;
@@ -413,21 +482,18 @@
     }
 
     function tratarResultadoQr(texto) {
-      // Mostra o conteúdo lido para debug
       setStatus('QR lido: ' + texto, 'success');
 
       let np = null;
 
-      // 1) Tenta interpretar como URL com ?np=
       try {
         const url = new URL(texto);
         const param = url.searchParams.get('np');
         if (param) np = param;
       } catch (e) {
-        // não era URL, tudo bem
+        // não era URL
       }
 
-      // 2) Se não achou via URL, usa o texto inteiro como NP
       if (!np) np = texto;
 
       if (np) {
@@ -480,8 +546,8 @@
       });
     }
 
-    // Carrega o CSV na primeira vez
-    carregarCsv();
+    // Carrega o CSV padrão na primeira vez
+    carregarCsvPadrao();
   </script>
 </body>
 </html>
