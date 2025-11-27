@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Consulta por NP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-size: 1.3rem;
+      margin-top: 0;
+      text-align: center;
+    }
+    .np-highlight {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin: 8px 0 16px;
+      text-align: center;
+    }
+    .status {
+      margin: 8px 0 16px;
+      font-size: 0.95rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #eee;
+    }
+    .status.error {
+      background: #ffe5e5;
+      color: #a40000;
+    }
+    .status.success {
+      background: #e5ffe9;
+      color: #006614;
+    }
+    .field-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .field-table th,
+    .field-table td {
+      padding: 6px 8px;
+      vertical-align: top;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .field-table th {
+      text-align: left;
+      width: 35%;
+      font-weight: 600;
+      background: #fafafa;
+    }
+    .field-table tr:nth-child(even) td {
+      background: #fcfcfc;
+    }
+    .small {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 16px;
+      text-align: center;
+    }
+    .search-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.95rem;
+    }
+    .search-box button {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.95rem;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+    }
+    .search-box button:active {
+      opacity: 0.8;
+    }
+  </style>
+
+  <!-- Papaparse local (arquivo papaparse.min.js na mesma pasta) -->
+  <script src="./papaparse.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Consulta de Registro por NP</h1>
+
+    <!-- Busca manual (além do QR) -->
+    <div class="search-box">
+      <input id="manualNp" type="text" placeholder="Digite o NP (ex: ab-011)" />
+      <button onclick="buscarManual()">Buscar</button>
+    </div>
+
+    <div id="npInfo" class="np-highlight"></div>
+    <div id="status" class="status">Carregando dados...</div>
+    <table id="resultTable" class="field-table" style="display:none;"></table>
+
+    <div class="small">
+      Visualização offline baseada no arquivo <strong>unificado_consolidado v26_10 v1.csv</strong>.
+    </div>
+  </div>
+
+  <script>
+    // 👇 aqui você aponta para o seu CSV
+    const CSV_FILE = 'unificado_consolidado v26_10 v1.csv';
+
+    let registros = [];
+    let cabecalho = [];
+
+    // Lê o parâmetro ?np= da URL
+    function getNpFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const np = params.get('np');
+      return np ? np.trim() : null;
+    }
+
+    function setStatus(msg, tipo = '') {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = msg;
+      statusEl.className = 'status';
+      if (tipo) statusEl.classList.add(tipo);
+    }
+
+    function mostrarRegistro(registro, npBuscado) {
+      const npInfo = document.getElementById('npInfo');
+      const tabela = document.getElementById('resultTable');
+
+      npInfo.textContent = npBuscado ? `NP consultado: ${npBuscado}` : '';
+
+      if (!registro) {
+        tabela.style.display = 'none';
+        setStatus('Nenhum registro encontrado para este NP.', 'error');
+        return;
+      }
+
+      let html = '';
+      cabecalho.forEach(col => {
+        const valor = registro[col];
+        if (valor === null || valor === undefined || valor === '') return;
+        html += `
+          <tr>
+            <th>${col}</th>
+            <td>${valor}</td>
+          </tr>
+        `;
+      });
+
+      tabela.innerHTML = html;
+      tabela.style.display = 'table';
+      setStatus('Registro encontrado com sucesso.', 'success');
+    }
+
+    function buscarPorNp(npValor) {
+      if (!npValor) {
+        setStatus('Informe um NP para buscar.', 'error');
+        mostrarRegistro(null, null);
+        return;
+      }
+
+      const npNormalizado = npValor.toString().trim().toLowerCase();
+
+      const registro = registros.find(r => {
+        const v = (r['np'] || r['NP'] || '').toString().trim().toLowerCase();
+        return v === npNormalizado;
+      });
+
+      mostrarRegistro(registro, npValor);
+    }
+
+    function buscarManual() {
+      const valor = document.getElementById('manualNp').value;
+      buscarPorNp(valor);
+
+      // Atualiza a URL (opcional, ajuda nos QR/compartilhamento)
+      const url = new URL(window.location);
+      if (valor) {
+        url.searchParams.set('np', valor);
+      } else {
+        url.searchParams.delete('np');
+      }
+      window.history.replaceState({}, '', url);
+    }
+
+    function carregarCsv() {
+      setStatus('Carregando dados do CSV...');
+
+      Papa.parse(CSV_FILE, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          if (results.errors && results.errors.length > 0) {
+            console.warn('Erros ao ler CSV:', results.errors);
+          }
+
+          registros = results.data || [];
+          cabecalho = results.meta && results.meta.fields ? results.meta.fields : [];
+
+          if (registros.length === 0) {
+            setStatus('Nenhum dado encontrado no CSV.', 'error');
+            return;
+          }
+
+          setStatus('Dados carregados. Procurando NP...');
+          const npUrl = getNpFromUrl();
+          if (npUrl) {
+            document.getElementById('manualNp').value = npUrl;
+            buscarPorNp(npUrl);
+          } else {
+            setStatus('Digite um NP ou use um QR Code com ?np=...', '');
+          }
+        },
+        error: function(err) {
+          console.error(err);
+          setStatus('Erro ao carregar o CSV (talvez sem conexão na primeira vez).', 'error');
+        }
+      });
+    }
+
+    // 🧩 Registro do Service Worker para funcionar offline
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .catch(err => console.warn('Service Worker não registrado:', err));
+      });
+    }
+
+    // Inicia
+    carregarCsv();
+  </script>
+</body>
+</html>
