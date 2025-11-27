@@ -59,7 +59,7 @@
     }
     .field-table th {
       text-align: left;
-      width: 35%;
+      width: 40%;
       font-weight: 600;
       background: #fafafa;
     }
@@ -98,7 +98,7 @@
     }
   </style>
 
-  <!-- Papaparse local (arquivo papaparse.min.js na mesma pasta) -->
+  <!-- Papaparse local -->
   <script src="./papaparse.min.js"></script>
 </head>
 <body>
@@ -116,18 +116,63 @@
     <table id="resultTable" class="field-table" style="display:none;"></table>
 
     <div class="small">
-      Visualização offline baseada no arquivo <strong>unificado_consolidado v26_10 v1.csv</strong>.
+      Visualização offline baseada no arquivo <strong>dados.csv</strong>.
     </div>
   </div>
 
   <script>
-    // 👇 aqui você aponta para o seu CSV
-    const CSV_FILE = 'unificado_consolidado v26_10 v1.csv';
+    // 👉 nome do arquivo de dados
+    const CSV_FILE = 'dados.csv';
 
     let registros = [];
     let cabecalho = [];
 
-    // Lê o parâmetro ?np= da URL
+    // Campos que queremos mostrar (em ordem)
+    const CAMPOS_VISIVEIS = [
+      'np',
+      'material',
+      'qtde',
+      'sitio',
+      'added_sitio',
+      'locus',
+      'UE',
+      'nivel',
+      'quadriculaLetra',
+      'quadriculaNumero',
+      'latitude_degrees',
+      'longitude_degrees',
+      '_altitude',
+      'branchTipoAtividade',
+      'branchOrigemMaterial',
+      'dateFoto',
+      'hipoteseSerTestada',
+      'obs_inicial',
+      'obs_final'
+    ];
+
+    // Rótulos bonitos para exibição
+    const LABELS = {
+      np: 'NP',
+      material: 'Material',
+      qtde: 'Quantidade',
+      sitio: 'Sítio',
+      added_sitio: 'Sítio (derivado)',
+      locus: 'Lócus',
+      UE: 'UE',
+      nivel: 'Nível',
+      quadriculaLetra: 'Quadrícula - Letra',
+      quadriculaNumero: 'Quadrícula - Número',
+      latitude_degrees: 'Latitude (graus)',
+      longitude_degrees: 'Longitude (graus)',
+      _altitude: 'Altitude (m)',
+      branchTipoAtividade: 'Tipo de Atividade',
+      branchOrigemMaterial: 'Origem do Material',
+      dateFoto: 'Data da Foto',
+      hipoteseSerTestada: 'Hipótese a ser testada',
+      obs_inicial: 'Observação inicial',
+      obs_final: 'Observação final'
+    };
+
     function getNpFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const np = params.get('np');
@@ -154,16 +199,41 @@
       }
 
       let html = '';
-      cabecalho.forEach(col => {
+
+      CAMPOS_VISIVEIS.forEach(col => {
+        // preferir "sitio", se não, "added_sitio"
+        if (col === 'sitio') {
+          const valorSitio = registro['sitio'] || registro['added_sitio'];
+          if (valorSitio && valorSitio.trim() !== '') {
+            html += `
+              <tr>
+                <th>${LABELS['sitio']}</th>
+                <td>${valorSitio}</td>
+              </tr>
+            `;
+          }
+          return; // já tratamos sitio/added_sitio
+        }
+
         const valor = registro[col];
-        if (valor === null || valor === undefined || valor === '') return;
+
+        if (valor === null || valor === undefined) return;
+        if (valor.toString().trim() === '') return;
+
+        const label = LABELS[col] || col;
         html += `
           <tr>
-            <th>${col}</th>
+            <th>${label}</th>
             <td>${valor}</td>
           </tr>
         `;
       });
+
+      if (!html) {
+        tabela.style.display = 'none';
+        setStatus('Registro encontrado, mas sem campos visíveis configurados.', 'error');
+        return;
+      }
 
       tabela.innerHTML = html;
       tabela.style.display = 'table';
@@ -191,7 +261,6 @@
       const valor = document.getElementById('manualNp').value;
       buscarPorNp(valor);
 
-      // Atualiza a URL (opcional, ajuda nos QR/compartilhamento)
       const url = new URL(window.location);
       if (valor) {
         url.searchParams.set('np', valor);
@@ -208,6 +277,7 @@
         download: true,
         header: true,
         skipEmptyLines: true,
+        delimiter: ';',          // 👈 IMPORTANTE: seu arquivo usa ponto-e-vírgula
         complete: function(results) {
           if (results.errors && results.errors.length > 0) {
             console.warn('Erros ao ler CSV:', results.errors);
@@ -232,12 +302,12 @@
         },
         error: function(err) {
           console.error(err);
-          setStatus('Erro ao carregar o CSV (talvez sem conexão na primeira vez).', 'error');
+          setStatus('Erro ao carregar o CSV.', 'error');
         }
       });
     }
 
-    // 🧩 Registro do Service Worker para funcionar offline
+    // registra o service worker (offline)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
@@ -245,7 +315,6 @@
       });
     }
 
-    // Inicia
     carregarCsv();
   </script>
 </body>
