@@ -244,16 +244,163 @@
         width: 100%;
       }
     }
-  </style>
+  
+    /* Etiquetas de impressão (QR + informações) */
+    .etiquetas-container {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .etiqueta {
+      width: 4cm;
+      height: 2cm;
+      border: 1px solid #111;
+      box-sizing: border-box;
+      padding: 2px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .etiqueta + .etiqueta {
+      margin-left: 0.3cm; /* espaçamento entre as duas etiquetas */
+    }
+
+    .etiqueta-texto {
+      font-size: 0.55rem;
+      line-height: 1.1;
+      width: 100%;
+    }
+
+    .etiqueta-texto div {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* QR 2cm x 2cm dentro da etiqueta */
+    .etiqueta-qrcode {
+      width: 2cm;
+      height: 2cm;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .etiqueta-qrcode img,
+    .etiqueta-qrcode canvas {
+      width: 2cm !important;
+      height: 2cm !important;
+      object-fit: contain;
+      display: block;
+    }
+
+    .etiqueta-qr-wrapper {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+      gap: 0.1cm;
+    }
+
+    .etiqueta-np-vertical {
+      font-size: 0.45rem;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      white-space: nowrap;
+      font-weight: bold;
+    }
+
+    .etiquetas-acoes {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-start;
+    }
+
+    .etiquetas-acoes button {
+      padding: 4px 8px;
+      font-size: 0.8rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #16a34a; /* verde */
+      color: #fff;
+    }
+
+    /* Botão Gerar etiqueta (outline azul) */
+    
+    
+
+    @media print {
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+      }
+      .container {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        border-radius: 0;
+      }
+      /* Esconde tudo da página, menos a área de etiquetas */
+      .container > *:not(#etiquetasArea) {
+        display: none !important;
+      }
+      #etiquetasArea {
+        display: block !important;
+        margin: 0;
+      }
+    }
+
+
+    #btnCsvInternet {
+      background: #000000;
+      color: #ffffff;
+    }
+
+
+#etiquetaControls button {
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+#etiquetaControls button:hover {
+    background: #1e4fd1;
+}
+
+</style>
 
   <!-- Papaparse local -->
   <script src="./papaparse.min.js"></script>
   <!-- Biblioteca de leitura de QR -->
   <script src="./jsQR.js"></script>
+  <script src="./qrcode.min.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Consulta rápida de NP</h1>
+
+
+    <!-- Controles de CSV -->
+    <div class="csv-controls">
+      <button id="btnCsvInternet" type="button" onclick="carregarCsvPadrao()">Carregar Dados da Internet (.CSV)</button>
+      <button type="button" class="secondary" onclick="document.getElementById('csvInput').click()">
+        Carregar Dados do Aparelho (.CSV)
+      </button>
+      <input id="csvInput" type="file" accept=".csv" style="display:none;" />
+    </div>
 
     <!-- Busca manual + botão de câmera -->
     <div class="search-box">
@@ -262,14 +409,6 @@
       <button onclick="iniciarCamera()" class="camera-button">📷 Ler QR</button>
     </div>
 
-    <!-- Controles de CSV -->
-    <div class="csv-controls">
-      <button type="button" onclick="carregarCsvPadrao()">Usar CSV padrão (dados.csv)</button>
-      <button type="button" class="secondary" onclick="document.getElementById('csvInput').click()">
-        Carregar CSV do aparelho
-      </button>
-      <input id="csvInput" type="file" accept=".csv" style="display:none;" />
-    </div>
 
     <!-- Área de câmera -->
     <div id="cameraContainer">
@@ -283,6 +422,15 @@
     <div id="npInfo" class="np-highlight"></div>
     <div id="status" class="status">Carregando dados...</div>
     <table id="resultTable" class="field-table" style="display:none;"></table>
+
+    <!-- Controles da etiqueta -->
+    <div id="etiquetaControls" style="display:none; margin: 12px 0;">
+      <button type="button" onclick="abrirEtiquetas()">Gerar etiqueta (NP atual)</button>
+    </div>
+
+    <!-- Área onde as etiquetas serão desenhadas -->
+    <div id="etiquetasArea" style="display:none;"></div>
+
 
     <div class="small">
       <strong>Programa de Gestão do Patrimônio Arqueológico - Estrutura de Disposição de Rejeitos/Resíduos 9 (EDR 9)</strong><br>
@@ -302,6 +450,11 @@
     let streamCamera = null;
     let qrAtivo = false;
 
+    // Guarda o último registro para geração de etiquetas
+    let ultimoRegistro = null;
+    let ultimoNpBuscado = null;
+
+
     function getNpFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const np = params.get('np');
@@ -319,6 +472,27 @@
       document.getElementById('resultTable').style.display = 'none';
       document.getElementById('resultTable').innerHTML = '';
       document.getElementById('npInfo').textContent = '';
+      limparEtiquetas();
+    }
+
+    function limparEtiquetas() {
+      const area = document.getElementById('etiquetasArea');
+      const controls = document.getElementById('etiquetaControls');
+
+      if (area) {
+        area.innerHTML = '';
+        area.style.display = 'none';
+      }
+      if (controls) {
+        controls.style.display = 'none';
+      }
+
+      if (typeof ultimoRegistro !== 'undefined') {
+        ultimoRegistro = null;
+      }
+      if (typeof ultimoNpBuscado !== 'undefined') {
+        ultimoNpBuscado = null;
+      }
     }
 
     function normalizarNp(np) {
@@ -411,6 +585,9 @@
     }
 
     function buscarPorNp(np) {
+      // Limpamos sempre a etiqueta anterior ao buscar uma nova NP
+      limparEtiquetas();
+
       if (!registros || registros.length === 0) {
         setStatus('Nenhum CSV carregado. Carregue um CSV ou use o padrão antes de buscar.', true);
         return;
@@ -429,10 +606,22 @@
       }
 
       setStatus('Registro encontrado.', false);
+
+      // Guarda registro/NP para etiqueta
+      ultimoRegistro = registro;
+      ultimoNpBuscado = np;
+
+      const controls = document.getElementById('etiquetaControls');
+      if (controls) {
+        controls.style.display = 'block';
+      }
+
       mostrarRegistro(registro, np);
     }
 
     function mostrarRegistro(registro, npBuscado) {
+      ultimoRegistro = registro;
+      ultimoNpBuscado = npBuscado;
       const tabela = document.getElementById('resultTable');
       tabela.innerHTML = '';
       tabela.style.display = 'table';
@@ -513,6 +702,119 @@
       addRow('Origem do Material', registro['branchOrigemMaterial']);
 
       tabela.innerHTML = htmlParts.join('');
+    }
+
+
+    function abrirEtiquetas() {
+      if (!ultimoRegistro || !ultimoNpBuscado) {
+        alert('Nenhum registro carregado para gerar etiqueta.');
+        return;
+      }
+      gerarEtiquetas(ultimoRegistro, ultimoNpBuscado);
+    }
+
+    function gerarEtiquetas(registro, npBuscado) {
+      const area = document.getElementById('etiquetasArea');
+      if (!area) return;
+
+      // Campos principais
+      const sitio = registro['sitio'] || registro['Sítio'] || registro['sitio_nome'] || '';
+      const np = registro['np'] || registro['NP'] || npBuscado || '';
+
+      const origemMaterial =
+        registro['branchOrigemMaterial'] ||
+        registro['origem_material'] ||
+        '';
+
+      const dataFoto =
+        registro['dateFoto'] ||
+        registro['data_foto'] ||
+        registro['DataFoto'] ||
+        '';
+
+      // Complementares
+      const locus = registro['locus'];
+      const ue = registro['UE'];
+      const qdL = registro['quadriculaLetra'];
+      const qdM = registro['quadriculaNumero'];
+      const nivel = registro['nivel'];
+
+      let linhasComplementares = "";
+
+      // Lócus | UE
+      let linhaLocusUE = "";
+      if (locus !== undefined && locus !== null && locus !== "")
+        linhaLocusUE += `<strong>Lócus:</strong> ${String(locus)}`;
+      if (ue !== undefined && ue !== null && ue !== "")
+        linhaLocusUE += (linhaLocusUE ? " | " : "") + `<strong>UE:</strong> ${String(ue)}`;
+      if (linhaLocusUE)
+        linhasComplementares += `<div>${linhaLocusUE}</div>`;
+
+      // Qd-L | Qd-M
+      let linhaQuad = "";
+      if (qdL !== undefined && qdL !== null && qdL !== "")
+        linhaQuad += `<strong>Qd-L:</strong> ${String(qdL)}`;
+      if (qdM !== undefined && qdM !== null && qdM !== "")
+        linhaQuad += (linhaQuad ? " | " : "") + `<strong>Qd-M:</strong> ${String(qdM)}`;
+      if (linhaQuad)
+        linhasComplementares += `<div>${linhaQuad}</div>`;
+
+      // Nível na linha final
+      if (nivel !== undefined && nivel !== null && nivel !== "")
+        linhasComplementares += `<div><strong>Nível:</strong> ${String(nivel)}</div>`;
+
+      const qrData = npBuscado ? String(npBuscado) : String(np || '');
+      const qrContainerId = 'qrEtiquetaContainer';
+
+      area.innerHTML = `
+        <div class="etiquetas-container">
+
+          <!-- 1ª etiqueta: QR + NP vertical -->
+          <div class="etiqueta">
+            <div class="etiqueta-qr-wrapper">
+              <div class="etiqueta-qrcode" id="${qrContainerId}"></div>
+              <div class="etiqueta-np-vertical">NP: ${np || '-'}</div>
+            </div>
+          </div>
+
+          <!-- 2ª etiqueta: texto -->
+          <div class="etiqueta">
+            <div class="etiqueta-texto">
+              <div><strong>Sítio:</strong> ${sitio || '-'}</div>
+              <div><strong>NP:</strong> ${np || '-'}</div>
+              <div><strong>Origem:</strong> ${origemMaterial || '-'}</div>
+              <div><strong>Data da Foto:</strong> ${dataFoto || '-'}</div>
+              ${linhasComplementares}
+            </div>
+          </div>
+        </div>
+
+        <div class="etiquetas-acoes">
+          <button type="button" onclick="window.print()">Imprimir / Salvar em PDF</button>
+        </div>
+      `;
+
+      area.style.display = 'block';
+
+      // Gera QR 2x2cm (200x200px) sem distorção
+      if (window.QRCode) {
+        const qrContainer = document.getElementById(qrContainerId);
+        if (qrContainer) {
+          qrContainer.innerHTML = '';
+          try {
+            new QRCode(qrContainer, {
+              text: qrData,
+              width: 200,
+              height: 200,
+              correctLevel: QRCode.CorrectLevel.H,
+            });
+          } catch (e) {
+            console.error('Erro ao gerar QR Code:', e);
+          }
+        }
+      } else {
+        console.error('Biblioteca qrcode.min.js não encontrada.');
+      }
     }
 
     async function baixarFoto(url) {
